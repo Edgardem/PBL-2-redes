@@ -1,0 +1,128 @@
+version: '3.8'
+
+# Lista de servidores como uma string separada por vírgulas
+# Usamos a porta interna 8000 para comunicação inter-servidor
+x-servidores: &servidores
+  http://servidor_norte:8000,http://servidor_nordeste:8000,http://servidor_centro_oeste:8000,http://servidor_sudeste:8000,http://servidor_sul:8000
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis_coordenacao
+    ports:
+      - "6379:6379"
+    networks:
+      - rede_jogo
+
+  servidor_norte:
+    build:
+      context: .
+      dockerfile: Dockerfile.servidor
+    container_name: servidor_norte
+    environment:
+      - NOME_SERVIDOR=servidor_norte
+      - REDIS_HOST=redis
+      - SERVIDORES_JOGO=*servidores # Referência direta à string
+    ports:
+      - "8001:8000"
+    networks:
+      - rede_jogo
+    depends_on:
+      - redis
+
+  servidor_nordeste:
+    build:
+      context: .
+      dockerfile: Dockerfile.servidor
+    container_name: servidor_nordeste
+    environment:
+      - NOME_SERVIDOR=servidor_nordeste
+      - REDIS_HOST=redis
+      - SERVIDORES_JOGO=*servidores
+    ports:
+      - "8002:8000"
+    networks:
+      - rede_jogo
+    depends_on:
+      - redis
+
+  servidor_centro_oeste:
+    build:
+      context: .
+      dockerfile: Dockerfile.servidor
+    container_name: servidor_centro_oeste
+    environment:
+      - NOME_SERVIDOR=servidor_centro_oeste
+      - REDIS_HOST=redis
+      - SERVIDORES_JOGO=*servidores
+    ports:
+      - "8003:8000"
+    networks:
+      - rede_jogo
+    depends_on:
+      - redis
+
+  servidor_sudeste:
+    build:
+      context: .
+      dockerfile: Dockerfile.servidor
+    container_name: servidor_sudeste
+    environment:
+      - NOME_SERVIDOR=servidor_sudeste
+      - REDIS_HOST=redis
+      - SERVIDORES_JOGO=*servidores
+    ports:
+      - "8004:8000"
+    networks:
+      - rede_jogo
+    depends_on:
+      - redis
+
+  servidor_sul:
+    build:
+      context: .
+      dockerfile: Dockerfile.servidor
+    container_name: servidor_sul
+    environment:
+      - NOME_SERVIDOR=servidor_sul
+      - REDIS_HOST=redis
+      - SERVIDORES_JOGO=*servidores
+    ports:
+      - "8005:8000"
+    networks:
+      - rede_jogo
+    depends_on:
+      - redis
+
+  cliente_teste_norte:
+    build:
+      context: .
+      dockerfile: Dockerfile.cliente
+    container_name: cliente_teste_norte
+    environment:
+      # O cliente agora usa o nome do serviço e a porta interna (8000)
+      - SERVIDOR_HOST=servidor_norte
+      - SERVIDOR_PORTA=8000
+      - REDIS_HOST=redis
+    networks:
+      - rede_jogo
+    depends_on:
+      - servidor_norte
+
+  cliente_teste_sul:
+    build:
+      context: .
+      dockerfile: Dockerfile.cliente
+    container_name: cliente_teste_sul
+    environment:
+      - SERVIDOR_HOST=servidor_sul
+      - SERVIDOR_PORTA=8000
+      - REDIS_HOST=redis
+    networks:
+      - rede_jogo
+    depends_on:
+      - servidor_sul
+
+networks:
+  rede_jogo:
+    driver: bridge
